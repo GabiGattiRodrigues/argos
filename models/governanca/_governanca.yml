@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: gov_catalogo_colunas
+    description: "Inventário de colunas da camada gold com tipo de dado, classificação, finalidade, base legal e dono. Gerado do próprio projeto."
+    columns:
+      - name: tipo_dado
+        description: "Nunca nulo: coluna sem classificação quebra o build."
+        data_tests: [not_null]
+  - name: gov_matriz_acesso
+    description: "Política de acesso como tabela: papel x tipo de dado x tratamento."
+    columns:
+      - name: tratamento
+        data_tests: [{accepted_values: {arguments: {values: [claro, mascarar, pseudonimizar, faixa, remover]}}}]
+  - name: gov_fila_retencao
+    description: "Registros que passaram do prazo de retenção e a ação esperada."

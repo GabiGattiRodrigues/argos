@@ -1,0 +1,22 @@
+version: 2
+
+sources:
+  - name: origem
+    description: "Arquivos entregues pelos sistemas de origem. Nenhum papel de consumo tem acesso a esta camada."
+    tables:
+      - name: clientes
+        description: "Cadastro de clientes (sistema de onboarding / KYC)."
+        meta:
+          produtor: "Onboarding"
+          external_location: "read_csv('data/raw/clientes.csv', header = true, types = struct_pack(cep := 'VARCHAR', telefone := 'VARCHAR', cpf := 'VARCHAR'))"
+      - name: cartoes
+        description: "Cartões emitidos (processadora). Contém o número completo do cartão: dado PCI."
+        meta:
+          produtor: "Processadora"
+          external_location: "read_csv('data/raw/cartoes.csv', header = true, types = struct_pack(numero_cartao := 'VARCHAR'))"
+      - name: transacoes
+        description: "Transações de cartão. Coberta pelo contrato contratos/transacoes.yml."
+        meta:
+          produtor: "App de Cartões"
+          contrato: "contratos/transacoes.yml"
+          external_location: "read_csv('data/raw/transacoes.csv', header = true, types = struct_pack(mcc := 'VARCHAR'))"

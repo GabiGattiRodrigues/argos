@@ -1,0 +1,13 @@
+mcc,categoria,alto_risco_pld
+5411,Supermercados,false
+5812,Restaurantes,false
+5814,Fast food,false
+5541,Postos de combustível,false
+5912,Farmácias,false
+4121,Transporte por app,false
+5311,Lojas de departamento,false
+5732,Eletrônicos,false
+4899,Streaming e assinaturas,false
+7995,Apostas,true
+6051,Quase-dinheiro / cripto,true
+4829,Transferência de dinheiro,true

@@ -1,0 +1,7 @@
+argos:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('ARGOS_DB', 'argos.duckdb') }}"
+      threads: 4

@@ -1,0 +1,53 @@
+name: build-e-publicacao
+
+on:
+  push: {branches: [main]}
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency: {group: pages, cancel-in-progress: true}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      ARGOS_SEGREDO: ${{ secrets.ARGOS_SEGREDO }}   # opcional; sem ele usa o segredo de desenvolvimento
+      DBT_PROFILES_DIR: .
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12", cache: pip}
+      - run: pip install -r requirements.txt
+
+      - name: Simular incidentes (precisam ser barrados)
+        run: python scripts/simular_incidentes.py
+
+      - name: Gerar base sintética
+        run: python scripts/gerar_dados.py
+
+      - name: dbt build (modelos + contratos + testes)
+        run: dbt build
+
+      - name: Documentação e página
+        run: |
+          dbt docs generate --static
+          python scripts/gerar_pagina.py
+          mkdir -p site/docs && cp target/static_index.html site/docs/index.html
+
+      - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main'
+        with: {path: site}
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment: {name: github-pages, url: ${{ steps.d.outputs.page_url }}}
+    steps:
+      - id: d
+        uses: actions/deploy-pages@v4

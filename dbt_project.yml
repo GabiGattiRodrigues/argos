@@ -1,0 +1,114 @@
+name: argos
+version: "1.0.0"
+config-version: 2
+profile: argos
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+target-path: target
+clean-targets: [target, dbt_packages]
+
+# -------------------------------------------------------------------------------------------
+# POLÍTICA DE ACESSO — a única fonte de verdade sobre quem vê o quê.
+# Cada coluna das tabelas gold declara, no YAML, o tipo de dado pessoal que carrega
+# (meta.tipo_dado). As views de cada papel são geradas a partir desta matriz:
+# nenhuma regra de mascaramento é escrita à mão dentro de um modelo.
+#
+# Tratamentos: claro | mascarar | pseudonimizar | faixa | remover
+# Tipo não listado para um papel => remover (falha fechada: na dúvida, o dado não sai).
+# -------------------------------------------------------------------------------------------
+vars:
+  data_referencia: "2026-09-30"
+  retencao_anos_pos_encerramento: 10      # Circular BCB 3.978, art. 67 (registros de PLD)
+  # Catálogo de tipos de dado: cada tipo herda uma classificação. As colunas só dizem o tipo.
+  # Níveis: publico < interno < confidencial < restrito
+  tipos_dado:
+    id_cliente:       {classificacao: confidencial, dado_pessoal: true,  nota: "identificador indireto"}
+    nome:             {classificacao: restrito,     dado_pessoal: true,  nota: "identificador direto"}
+    cpf:              {classificacao: restrito,     dado_pessoal: true,  nota: "identificador direto"}
+    email:            {classificacao: restrito,     dado_pessoal: true,  nota: "identificador direto / contato"}
+    telefone:         {classificacao: restrito,     dado_pessoal: true,  nota: "identificador direto / contato"}
+    endereco:         {classificacao: restrito,     dado_pessoal: true,  nota: "identificador direto"}
+    data_nascimento:  {classificacao: confidencial, dado_pessoal: true,  nota: "quase-identificador"}
+    renda:            {classificacao: confidencial, dado_pessoal: true,  nota: "quase-identificador / financeiro"}
+    cep:              {classificacao: confidencial, dado_pessoal: true,  nota: "quase-identificador"}
+    ocupacao:         {classificacao: confidencial, dado_pessoal: true,  nota: "quase-identificador"}
+    pep:              {classificacao: restrito,     dado_pessoal: true,  nota: "pessoa exposta politicamente"}
+    cartao_final:     {classificacao: confidencial, dado_pessoal: false, nota: "últimos 4 dígitos (PCI)"}
+    localidade:       {classificacao: interno,      dado_pessoal: false, nota: "cidade / UF"}
+    atributo_produto: {classificacao: interno,      dado_pessoal: false, nota: "atributo do produto ou do relacionamento"}
+    transacao:        {classificacao: confidencial, dado_pessoal: false, nota: "movimentação financeira (sigilo bancário)"}
+  papeis:
+    analista_bi:
+      descricao: "Dashboards e indicadores de negócio. Não precisa identificar ninguém."
+      politica:
+        id_cliente: pseudonimizar
+        data_nascimento: faixa
+        renda: faixa
+        cep: faixa
+        localidade: claro
+        atributo_produto: claro
+        transacao: claro
+    cientista_dados:
+      descricao: "Modelos de risco e propensão. Precisa de granularidade, não de identidade."
+      politica:
+        id_cliente: pseudonimizar
+        data_nascimento: faixa
+        renda: claro
+        cep: faixa
+        localidade: claro
+        atributo_produto: claro
+        transacao: claro
+        pep: claro
+        cartao_final: remover
+    compliance_pld:
+      descricao: "Monitoramento de PLD e comunicação ao COAF. Precisa identificar o cliente."
+      politica:
+        id_cliente: claro
+        nome: claro
+        cpf: claro
+        email: mascarar
+        telefone: mascarar
+        data_nascimento: claro
+        renda: claro
+        endereco: claro
+        cep: claro
+        localidade: claro
+        ocupacao: claro
+        pep: claro
+        atributo_produto: claro
+        cartao_final: claro
+        transacao: claro
+    crm_marketing:
+      descricao: "Campanhas. Vê contato em claro, mas só de quem consentiu (finalidade)."
+      politica:
+        id_cliente: claro
+        nome: claro
+        email: claro
+        telefone: claro
+        localidade: claro
+        atributo_produto: claro
+
+seeds:
+  argos:
+    +schema: referencia
+
+models:
+  argos:
+    +persist_docs: {relation: true, columns: true}
+    bronze:
+      +schema: bronze
+      +materialized: table
+    silver:
+      +schema: silver
+      +materialized: table
+    gold:
+      +schema: gold
+      +materialized: table
+    governanca:
+      +schema: governanca
+      +materialized: table
+    acesso:
+      +materialized: view

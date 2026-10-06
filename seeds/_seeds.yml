@@ -1,0 +1,6 @@
+version: 2
+seeds:
+  - name: mcc
+    description: "Códigos de categoria de estabelecimento (MCC) usados na base, com marcação de risco para PLD."
+    config:
+      column_types: {mcc: varchar, categoria: varchar, alto_risco_pld: boolean}

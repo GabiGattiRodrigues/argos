@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: silver_clientes
+    description: "Clientes limpos e padronizados. Camada restrita: não é concedida a nenhum papel."
+    columns:
+      - {name: id_cliente, data_tests: [unique, not_null]}
+      - {name: cpf, data_tests: [unique, not_null, argos.cpf_valido]}
+      - {name: email, data_tests: [unique, not_null]}
+      - name: telefone
+        data_tests: [{argos.formato: {arguments: {regex: '[0-9]{10,11}'}}}]
+      - name: cep
+        data_tests: [not_null, {argos.formato: {arguments: {regex: '[0-9]{8}'}}}]
+      - name: consentimento_marketing_ativo
+        description: "true só se o cliente consentiu e não revogou."
+  - name: silver_cartoes
+    description: "Cartões sem o número completo (minimização: só BIN, final e token)."
+    columns:
+      - {name: id_cartao, data_tests: [unique, not_null]}
+      - {name: token_cartao, data_tests: [unique, not_null]}
+      - name: id_cliente
+        data_tests: [{relationships: {arguments: {to: ref('silver_clientes'), field: id_cliente}}}]
+  - name: silver_transacoes
+    description: "Transações tipadas e enriquecidas com a categoria do MCC."
+    columns:
+      - {name: id_transacao, data_tests: [unique, not_null]}
+      - name: categoria_mcc
+        data_tests: [{accepted_values: {arguments: {values: [Supermercados, Restaurantes, Fast food, Postos de combustível, Farmácias, Transporte por app, Lojas de departamento, Eletrônicos, Streaming e assinaturas, Apostas, Quase-dinheiro / cripto, Transferência de dinheiro]}}}]

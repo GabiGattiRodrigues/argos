@@ -1,0 +1,29 @@
+# Contrato de dados: transações do cartão
+# Acordo entre quem PRODUZ o dado (time do app de cartões) e quem CONSOME (dados).
+# O dbt verifica as cláusulas abaixo a cada build; a quebra de qualquer uma barra o pipeline
+# antes que o problema chegue a um dashboard, a um modelo ou a uma comunicação ao COAF.
+contrato: transacoes_cartao
+versao: 1.0.0
+produtor: { time: "App de Cartões", contato: "squad-cartoes@argos.example" }
+consumidor: { time: "Dados", contato: "dados@argos.example" }
+entrega: { formato: csv, local: data/raw/transacoes.csv, frequencia: diaria }
+
+esquema:            # verificado por contrato do dbt em bronze_transacoes (nome + tipo)
+  - { coluna: id_transacao, tipo: varchar,   obrigatoria: true, unica: true }
+  - { coluna: id_cartao,    tipo: varchar,   obrigatoria: true }
+  - { coluna: data_hora,    tipo: timestamp, obrigatoria: true }
+  - { coluna: valor,        tipo: double,    obrigatoria: true, unidade: "reais (R$), duas casas" }
+  - { coluna: mcc,          tipo: varchar,   obrigatoria: true }
+  - { coluna: estabelecimento, tipo: varchar }
+  - { coluna: canal,        tipo: varchar,   valores: [presencial, online, carteira_digital] }
+  - { coluna: status,       tipo: varchar,   valores: [aprovada, negada, estornada] }
+
+qualidade:          # verificado por testes do dbt em bronze_transacoes
+  - regra: valor positivo
+  - regra: ticket médio diário entre R$ 20 e R$ 1.000   # pega troca de unidade (centavos)
+  - regra: nenhum dia com menos de 50% da mediana de volume  # pega carga parcial
+  - regra: todo id_cartao existe na base de cartões
+
+mudancas: >
+  Qualquer mudança de nome, tipo ou unidade de coluna é uma nova versão do contrato e precisa
+  ser combinada com o consumidor antes de ir para produção.

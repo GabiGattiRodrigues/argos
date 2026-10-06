@@ -1,0 +1,209 @@
+version: 2
+
+# Cada coluna declara meta.tipo_dado. A classificação vem do catálogo (vars.tipos_dado)
+# e as views de acesso são geradas a partir disso. Coluna sem tipo_dado quebra o build.
+
+models:
+  - name: dim_cliente
+    description: "Cliente no vocabulário do negócio. Tabela restrita: o consumo acontece pelas views de cada papel."
+    config:
+      contract: {enforced: true}
+      meta: {dono: "Dados", finalidade: "cadastro, risco e PLD", base_legal: "execução de contrato; obrigação legal (Lei 9.613/98)"}
+    columns:
+      - name: id_cliente
+        description: "Identificador do cliente."
+        data_type: varchar
+        config: {meta: {tipo_dado: id_cliente}}
+        data_tests: [unique, not_null]
+      - name: nome
+        description: "Nome completo."
+        data_type: varchar
+        config: {meta: {tipo_dado: nome}}
+      - name: cpf
+        description: "CPF, só dígitos."
+        data_type: varchar
+        config: {meta: {tipo_dado: cpf}}
+      - name: email
+        description: "E-mail."
+        data_type: varchar
+        config: {meta: {tipo_dado: email}}
+      - name: telefone
+        description: "Celular com DDD, só dígitos."
+        data_type: varchar
+        config: {meta: {tipo_dado: telefone}}
+      - name: data_nascimento
+        description: "Data de nascimento."
+        data_type: date
+        config: {meta: {tipo_dado: data_nascimento}}
+      - name: renda_mensal
+        description: "Renda mensal declarada (R$)."
+        data_type: double
+        config: {meta: {tipo_dado: renda}}
+      - name: endereco
+        description: "Logradouro e número."
+        data_type: varchar
+        config: {meta: {tipo_dado: endereco}}
+      - name: cep
+        description: "CEP, 8 dígitos."
+        data_type: varchar
+        config: {meta: {tipo_dado: cep}}
+      - name: cidade
+        description: "Cidade."
+        data_type: varchar
+        config: {meta: {tipo_dado: localidade}}
+      - name: uf
+        description: "UF."
+        data_type: varchar
+        config: {meta: {tipo_dado: localidade}}
+      - name: ocupacao
+        description: "Ocupação declarada."
+        data_type: varchar
+        config: {meta: {tipo_dado: ocupacao}}
+      - name: pep
+        description: "Pessoa exposta politicamente."
+        data_type: boolean
+        config: {meta: {tipo_dado: pep}}
+      - name: status_cliente
+        description: "ativo | encerrado."
+        data_type: varchar
+        config: {meta: {tipo_dado: atributo_produto}}
+      - name: data_cadastro
+        description: "Início do relacionamento."
+        data_type: date
+        config: {meta: {tipo_dado: atributo_produto}}
+      - name: data_encerramento
+        description: "Fim do relacionamento (nulo se ativo)."
+        data_type: date
+        config: {meta: {tipo_dado: atributo_produto}}
+      - name: consentimento_marketing_ativo
+        description: "Consentiu e não revogou."
+        data_type: boolean
+        config: {meta: {tipo_dado: atributo_produto}}
+  - name: dim_cartao
+    description: "Cartões, sem o número completo."
+    config:
+      contract: {enforced: true}
+      meta: {dono: "Dados", finalidade: "gestão do produto e PLD", base_legal: "execução de contrato"}
+    columns:
+      - name: id_cartao
+        description: "Identificador do cartão."
+        data_type: varchar
+        config: {meta: {tipo_dado: atributo_produto}}
+        data_tests: [unique, not_null]
+      - name: id_cliente
+        description: "Cliente titular."
+        data_type: varchar
+        config: {meta: {tipo_dado: id_cliente}}
+      - name: cartao_final
+        description: "Quatro últimos dígitos."
+        data_type: varchar
+        config: {meta: {tipo_dado: cartao_final}}
+      - name: bandeira
+        description: "Visa | Mastercard | Elo."
+        data_type: varchar
+        config: {meta: {tipo_dado: atributo_produto}}
+      - name: produto
+        description: "Básico | Gold | Platinum."
+        data_type: varchar
+        config: {meta: {tipo_dado: atributo_produto}}
+      - name: limite
+        description: "Limite de crédito (R$)."
+        data_type: double
+        config: {meta: {tipo_dado: atributo_produto}}
+      - name: data_emissao
+        description: "Data de emissão."
+        data_type: date
+        config: {meta: {tipo_dado: atributo_produto}}
+      - name: status_cartao
+        description: "ativo | bloqueado | cancelado."
+        data_type: varchar
+        config: {meta: {tipo_dado: atributo_produto}}
+  - name: fct_transacoes
+    description: "Uma linha por transação de cartão."
+    config:
+      contract: {enforced: true}
+      meta: {dono: "Dados", finalidade: "indicadores, modelos e monitoramento de PLD", base_legal: "execução de contrato; obrigação legal (Circular BCB 3.978)"}
+    columns:
+      - name: id_transacao
+        description: "Identificador da transação."
+        data_type: varchar
+        config: {meta: {tipo_dado: transacao}}
+        data_tests: [unique, not_null]
+      - name: id_cartao
+        description: "Cartão usado."
+        data_type: varchar
+        config: {meta: {tipo_dado: atributo_produto}}
+      - name: id_cliente
+        description: "Titular do cartão."
+        data_type: varchar
+        config: {meta: {tipo_dado: id_cliente}}
+        data_tests: [not_null, {relationships: {arguments: {to: ref('dim_cliente'), field: id_cliente}}}]
+      - name: data_hora
+        description: "Momento da transação."
+        data_type: timestamp
+        config: {meta: {tipo_dado: transacao}}
+      - name: data
+        description: "Dia da transação."
+        data_type: date
+        config: {meta: {tipo_dado: transacao}}
+      - name: valor
+        description: "Valor em R$."
+        data_type: double
+        config: {meta: {tipo_dado: transacao}}
+      - name: mcc
+        description: "Código da categoria do estabelecimento."
+        data_type: varchar
+        config: {meta: {tipo_dado: transacao}}
+      - name: categoria_mcc
+        description: "Categoria do estabelecimento."
+        data_type: varchar
+        config: {meta: {tipo_dado: transacao}}
+      - name: mcc_alto_risco_pld
+        description: "Categoria marcada como alto risco para PLD."
+        data_type: boolean
+        config: {meta: {tipo_dado: transacao}}
+      - name: canal
+        description: "presencial | online | carteira_digital."
+        data_type: varchar
+        config: {meta: {tipo_dado: transacao}}
+      - name: status_transacao
+        description: "aprovada | negada | estornada."
+        data_type: varchar
+        config: {meta: {tipo_dado: transacao}}
+  - name: mart_crm_contatos
+    description: "Contatos elegíveis para campanha: só clientes ativos com consentimento vigente."
+    config:
+      contract: {enforced: true}
+      meta: {dono: "CRM", finalidade: "marketing", base_legal: "consentimento (LGPD art. 7º, I)"}
+    data_tests:
+      - argos.somente_com_consentimento: {}
+    columns:
+      - name: id_cliente
+        description: "Identificador do cliente."
+        data_type: varchar
+        config: {meta: {tipo_dado: id_cliente}}
+        data_tests: [unique, not_null]
+      - name: nome
+        description: "Nome completo."
+        data_type: varchar
+        config: {meta: {tipo_dado: nome}}
+      - name: email
+        description: "E-mail."
+        data_type: varchar
+        config: {meta: {tipo_dado: email}}
+      - name: telefone
+        description: "Celular com DDD."
+        data_type: varchar
+        config: {meta: {tipo_dado: telefone}}
+      - name: cidade
+        description: "Cidade."
+        data_type: varchar
+        config: {meta: {tipo_dado: localidade}}
+      - name: uf
+        description: "UF."
+        data_type: varchar
+        config: {meta: {tipo_dado: localidade}}
+      - name: data_cadastro
+        description: "Início do relacionamento."
+        data_type: date
+        config: {meta: {tipo_dado: atributo_produto}}

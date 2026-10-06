@@ -1,0 +1,65 @@
+version: 2
+
+models:
+  - name: bronze_clientes
+    description: "Cópia fiel do cadastro de clientes. Camada restrita: não é concedida a nenhum papel."
+    config: {contract: {enforced: true}}
+    columns:
+      - {name: id_cliente, data_type: varchar, constraints: [{type: not_null}], data_tests: [unique]}
+      - {name: nome_completo, data_type: varchar}
+      - {name: cpf, data_type: varchar}
+      - {name: email, data_type: varchar}
+      - {name: telefone, data_type: varchar}
+      - {name: data_nascimento, data_type: date}
+      - {name: renda_mensal, data_type: double}
+      - {name: endereco, data_type: varchar}
+      - {name: cep, data_type: varchar}
+      - {name: cidade, data_type: varchar}
+      - {name: uf, data_type: varchar}
+      - {name: ocupacao, data_type: varchar}
+      - {name: pep, data_type: boolean}
+      - {name: consentimento_marketing, data_type: boolean}
+      - {name: data_revogacao_consentimento, data_type: date}
+      - {name: data_cadastro, data_type: date}
+      - {name: data_encerramento, data_type: date}
+
+  - name: bronze_cartoes
+    description: "Cópia fiel dos cartões emitidos. Único lugar do projeto em que o número completo do cartão existe."
+    config: {contract: {enforced: true}}
+    columns:
+      - {name: id_cartao, data_type: varchar, constraints: [{type: not_null}], data_tests: [unique]}
+      - {name: id_cliente, data_type: varchar}
+      - {name: numero_cartao, data_type: varchar}
+      - {name: bandeira, data_type: varchar}
+      - {name: produto, data_type: varchar}
+      - {name: limite, data_type: double}
+      - {name: data_emissao, data_type: date}
+      - {name: status, data_type: varchar}
+
+  - name: bronze_transacoes
+    description: >
+      Cópia fiel das transações, protegida pelo contrato contratos/transacoes.yml. O esquema é
+      checado pelo contrato do dbt; as regras de qualidade, pelos testes abaixo.
+    config: {contract: {enforced: true}}
+    data_tests:
+      - argos.ticket_medio_diario_entre: {arguments: {coluna: valor, coluna_data: data_hora, minimo: 20, maximo: 1000}}
+      - argos.volume_diario_minimo: {arguments: {coluna_data: data_hora, fracao_da_mediana: 0.5}}
+    columns:
+      - {name: id_transacao, data_type: varchar, constraints: [{type: not_null}], data_tests: [unique]}
+      - name: id_cartao
+        data_type: varchar
+        constraints: [{type: not_null}]
+        data_tests: [{relationships: {arguments: {to: ref('bronze_cartoes'), field: id_cartao}}}]
+      - {name: data_hora, data_type: timestamp, constraints: [{type: not_null}]}
+      - name: valor
+        data_type: double
+        constraints: [{type: not_null}]
+        data_tests: [{argos.positivo: {}}]
+      - {name: mcc, data_type: varchar, constraints: [{type: not_null}]}
+      - {name: estabelecimento, data_type: varchar}
+      - name: canal
+        data_type: varchar
+        data_tests: [{accepted_values: {arguments: {values: [presencial, online, carteira_digital]}}}]
+      - name: status
+        data_type: varchar
+        data_tests: [{accepted_values: {arguments: {values: [aprovada, negada, estornada]}}}]

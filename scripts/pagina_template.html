@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Argos · Governança de dados sensíveis</title>
+<meta name="description" content="Classificação, políticas de acesso por papel, contratos de dados e retenção, tudo como código em dbt + DuckDB. Projeto de portfólio de Gabriela Gatti Rodrigues.">
+<link rel="icon" href="icone.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#060C1C;--panel:#0D1730;--panel-2:#132140;--line:#1E3160;--line-soft:#16264A;
+  --ink:#EAF1FF;--muted:#93A8D0;--blue:#3E8CFF;--cyan:#61E1FF;--pop:#FF5CA8;
+  --ok:#3DDC97;--warn:#FFC857;--maxw:1140px;
+  --font-h:"Chakra Petch",system-ui,sans-serif;--font-b:"IBM Plex Sans",system-ui,sans-serif;
+  --font-m:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  /* tratamentos */
+  --t-claro:#3E8CFF;--t-mascarar:#FFC857;--t-pseudonimizar:#B48CFF;--t-faixa:#61E1FF;--t-remover:#4A5B80;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--void);color:var(--ink);font:16px/1.6 var(--font-b);
+  background-image:radial-gradient(900px 500px at 85% -10%,#12306a55,transparent 60%),radial-gradient(700px 400px at -10% 20%,#3e8cff14,transparent 60%)}
+a{color:var(--cyan)}
+code,pre{font-family:var(--font-m)}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 16px}
+header.top{display:flex;justify-content:space-between;align-items:center;padding:18px 0}
+.brand{font:600 14px var(--font-m);color:var(--muted);text-decoration:none}
+.lang{display:flex;gap:4px;border:1px solid var(--line);border-radius:999px;padding:3px}
+.lang button{background:none;border:0;color:var(--muted);font:500 12px var(--font-m);padding:5px 10px;border-radius:999px;cursor:pointer}
+.lang button[aria-pressed=true]{background:var(--panel-2);color:var(--ink)}
+.hero{padding:48px 0 28px}
+.hero-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:36px;align-items:center}
+@media (max-width:860px){.hero-grid{grid-template-columns:1fr}}
+.hero figure{margin:0}
+.hero figure img{width:100%;height:auto;display:block;border-radius:14px;border:1px solid var(--line);box-shadow:0 18px 40px -28px #000}
+.hero figcaption{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.5}
+.eyebrow{font:500 13px var(--font-m);color:var(--cyan);letter-spacing:.08em;text-transform:uppercase}
+h1{font:700 clamp(40px,7vw,72px)/1 var(--font-h);margin:10px 0 18px;letter-spacing:-.01em}
+h1 em{font-style:normal;color:var(--pop)}
+.lede{font-size:clamp(18px,2.2vw,21px);color:#cfdcf7;max-width:780px;margin:0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:34px 0 8px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.kpi b{display:block;font:700 34px/1 var(--font-h);color:var(--ink);font-variant-numeric:tabular-nums}
+.kpi span{font-size:13px;color:var(--muted)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;background:var(--blue);color:#fff;text-decoration:none;font-weight:600;font-size:14px}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+section{padding:46px 0;border-top:1px solid var(--line-soft)}
+h2{font:600 clamp(26px,3.4vw,34px)/1.15 var(--font-h);margin:0 0 10px}
+.sub{color:var(--muted);max-width:760px;margin:0 0 24px}
+.muted{color:var(--muted);font-size:14px}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line-soft);text-align:left;vertical-align:top}
+thead th{font:600 12px var(--font-m);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;background:var(--panel-2);position:sticky;top:0}
+tbody th{font-weight:500;white-space:nowrap}
+tbody th small,td small{display:block;font:400 11px var(--font-m);color:var(--muted);margin-top:2px}
+td code{font-size:13px;word-break:break-all}
+td[class^="t-"]{border-left:3px solid transparent}
+.t-claro{border-left-color:var(--t-claro)!important}
+.t-mascarar{border-left-color:var(--t-mascarar)!important}
+.t-pseudonimizar{border-left-color:var(--t-pseudonimizar)!important}
+.t-faixa{border-left-color:var(--t-faixa)!important}
+.t-remover,.t-off{border-left-color:var(--t-remover)!important;color:#5f7299}
+.matriz td{font:500 13px var(--font-m)}
+.matriz td.t-remover{color:#5f7299}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin:14px 0 0;font:12px var(--font-m);color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.cls{font:500 11px var(--font-m);padding:2px 8px;border-radius:999px;border:1px solid}
+.cls-restrito{color:var(--pop);border-color:#ff5ca866}
+.cls-confidencial{color:var(--warn);border-color:#ffc85766}
+.cls-interno{color:var(--cyan);border-color:#61e1ff55}
+.cls-publico{color:var(--ok);border-color:#3ddc9766}
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;counter-reset:passo}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;position:relative}
+.step:before{counter-increment:passo;content:"0" counter(passo);font:600 12px var(--font-m);color:var(--cyan)}
+.step h3{font:600 17px var(--font-h);margin:6px 0 6px}
+.step p{margin:0;color:var(--muted);font-size:14px}
+.step code{color:var(--ink);font-size:12.5px}
+@media (max-width:860px){.flow{grid-template-columns:1fr 1fr}}
+@media (max-width:520px){.flow{grid-template-columns:1fr}}
+.incs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.inc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column}
+.inc h3{font:600 19px/1.25 var(--font-h);margin:10px 0 6px}
+.inc p{margin:0 0 8px;font-size:14px;color:#cfdcf7}
+.inc .onde{color:var(--muted)}
+.inc pre{background:var(--void);border:1px solid var(--line-soft);border-radius:10px;padding:10px;font-size:11.5px;overflow-x:auto;white-space:pre;color:#cfdcf7;margin:6px 0 8px}
+.badge{align-self:flex-start;font:600 11px var(--font-m);text-transform:uppercase;letter-spacing:.06em;padding:3px 9px;border-radius:999px}
+.inc.ok .badge{background:#3ddc9722;color:var(--ok)}
+.inc.bad .badge{background:#ff5ca822;color:var(--pop)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.box h3{font:600 18px var(--font-h);margin:0 0 6px}
+.box p{margin:0;color:#cfdcf7;font-size:15px}
+.box b.big{display:block;font:700 30px var(--font-h);margin-bottom:4px}
+details summary{cursor:pointer;font:500 14px var(--font-m);color:var(--cyan);margin-bottom:14px}
+footer{padding:36px 0 50px;color:var(--muted);font-size:13px;border-top:1px solid var(--line-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <a class="brand" href="https://gabigattirodrigues.github.io/">← gabigattirodrigues</a>
+  <div class="lang" role="group" aria-label="Idioma">
+    <button type="button" data-lang="pt" aria-pressed="true">PT</button>
+    <button type="button" data-lang="en" aria-pressed="false">EN</button>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-grid">
+  <div>
+  <div class="eyebrow" data-pt="Governança de dados sensíveis · dbt + DuckDB" data-en="Sensitive data governance · dbt + DuckDB">Governança de dados sensíveis · dbt + DuckDB</div>
+  <h1>Argos</h1>
+  <p class="lede" data-pt="Todo mundo na empresa precisa de dado de cliente. Quase ninguém precisa saber <em>quem</em> é o cliente. O Argos faz essa distinção virar código: cada coluna declara o que carrega, uma política diz o que cada papel pode ver, e as tabelas de consumo são geradas a partir disso — ninguém escreve regra de mascaramento à mão." data-en="Everyone in the company needs customer data. Almost no one needs to know <em>who</em> the customer is. Argos turns that distinction into code: every column declares what it carries, a policy says what each role may see, and the consumption tables are generated from it — nobody hand-writes a masking rule.">Todo mundo na empresa precisa de dado de cliente. Quase ninguém precisa saber <em>quem</em> é o cliente. O Argos faz essa distinção virar código: cada coluna declara o que carrega, uma política diz o que cada papel pode ver, e as tabelas de consumo são geradas a partir disso — ninguém escreve regra de mascaramento à mão.</p>
+  </div>
+  <figure>
+    <img src="mercurio-e-argos.jpg" width="1000" height="627" alt="Pintura: Mercúrio toca flauta enquanto Argos, o guardião de cem olhos, adormece." data-alt-en="Painting: Mercury plays the flute while Argus, the hundred-eyed guardian, falls asleep.">
+    <figcaption data-pt="Mercúrio faz Argos, o guardião de cem olhos, dormir ao som da flauta, e leva a vaca que ele vigiava. Quando o vigia dorme, o que era protegido sai. Por isso aqui quem vigia é o build, que não dorme." data-en="Mercury lulls Argus, the hundred-eyed guardian, to sleep with his flute and takes the cow he was guarding. When the watchman sleeps, what was protected walks out. That's why here the watchman is the build, which never sleeps.">Mercúrio faz Argos, o guardião de cem olhos, dormir ao som da flauta, e leva a vaca que ele vigiava. Quando o vigia dorme, o que era protegido sai. Por isso aqui quem vigia é o build, que não dorme.</figcaption>
+  </figure>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><b>{{N_COLS}}</b><span data-pt="colunas classificadas, {{N_PESSOAIS}} com dado pessoal" data-en="classified columns, {{N_PESSOAIS}} with personal data">colunas classificadas, {{N_PESSOAIS}} com dado pessoal</span></div>
+    <div class="kpi"><b>4</b><span data-pt="papéis com views geradas pela política" data-en="roles with policy-generated views">papéis com views geradas pela política</span></div>
+    <div class="kpi"><b>{{N_CONTRATOS}}</b><span data-pt="modelos com contrato de esquema" data-en="models with an enforced schema contract">modelos com contrato de esquema</span></div>
+    <div class="kpi"><b>{{N_OK}}/{{N_TESTES}}</b><span data-pt="checagens passando no último build" data-en="checks passing on the last build">checagens passando no último build</span></div>
+    <div class="kpi"><b>{{N_INC}}/{{N_INC_TOTAL}}</b><span data-pt="incidentes simulados barrados" data-en="simulated incidents blocked">incidentes simulados barrados</span></div>
+  </div>
+  <div class="actions">
+    <a class="btn" href="docs/" data-pt="Documentação e linhagem ↗" data-en="Docs and lineage ↗">Documentação e linhagem ↗</a>
+    <a class="btn ghost" href="{{REPO}}" data-pt="Código no GitHub ↗" data-en="Code on GitHub ↗">Código no GitHub ↗</a>
+  </div>
+</div>
+
+<section id="olhares">
+  <h2 data-pt="O mesmo cliente, quatro olhares" data-en="The same customer, four views">O mesmo cliente, quatro olhares</h2>
+  <p class="sub" data-pt="Cliente {{ALVO}} (fictício), como cada papel o recebe. Nenhuma destas colunas foi escrita à mão: a view de cada papel é gerada da classificação da coluna cruzada com a política. O BI e a ciência de dados cruzam tabelas pelo pseudônimo sem nunca ver o identificador real; o CRM vê contato em claro, mas só de quem consentiu." data-en="Customer {{ALVO}} (fictitious), as each role receives it. None of these columns was hand-written: each role's view is generated from the column's classification crossed with the policy. BI and data science join tables through the pseudonym without ever seeing the real ID; CRM sees contact data in clear, but only for those who consented.">Cliente {{ALVO}} (fictício), como cada papel o recebe. Nenhuma destas colunas foi escrita à mão: a view de cada papel é gerada da classificação da coluna cruzada com a política. O BI e a ciência de dados cruzam tabelas pelo pseudônimo sem nunca ver o identificador real; o CRM vê contato em claro, mas só de quem consentiu.</p>
+  <div class="scroll"><table>
+    <thead><tr><th data-pt="coluna · tipo de dado" data-en="column · data type">coluna · tipo de dado</th>{{TH_PAPEIS}}</tr></thead>
+    <tbody>{{LINHAS_OLHAR}}</tbody>
+  </table></div>
+  <div class="legend">
+    <span><i style="background:var(--t-claro)"></i><span data-pt="em claro" data-en="clear">em claro</span></span>
+    <span><i style="background:var(--t-pseudonimizar)"></i><span data-pt="pseudonimizado" data-en="pseudonymized">pseudonimizado</span></span>
+    <span><i style="background:var(--t-mascarar)"></i><span data-pt="mascarado" data-en="masked">mascarado</span></span>
+    <span><i style="background:var(--t-faixa)"></i><span data-pt="generalizado em faixa" data-en="generalized into a band">generalizado em faixa</span></span>
+    <span><i style="background:var(--t-remover)"></i><span data-pt="removido" data-en="removed">removido</span></span>
+  </div>
+</section>
+
+<section id="como">
+  <h2 data-pt="Como funciona" data-en="How it works">Como funciona</h2>
+  <p class="sub" data-pt="Quatro peças, cada uma num lugar só. Mudar quem vê o quê é editar uma linha de configuração; o resto se regenera." data-en="Four pieces, each in a single place. Changing who sees what means editing one config line; everything else regenerates.">Quatro peças, cada uma num lugar só. Mudar quem vê o quê é editar uma linha de configuração; o resto se regenera.</p>
+  <div class="flow">
+    <div class="step"><h3 data-pt="Classificar" data-en="Classify">Classificar</h3><p data-pt="Cada coluna da gold declara seu <code>tipo_dado</code> (cpf, renda, cep…). O tipo herda a classificação: restrito, confidencial, interno." data-en="Every gold column declares its <code>tipo_dado</code> (cpf, income, zip…). The type inherits its classification: restricted, confidential, internal.">Cada coluna da gold declara seu <code>tipo_dado</code> (cpf, renda, cep…). O tipo herda a classificação: restrito, confidencial, interno.</p></div>
+    <div class="step"><h3 data-pt="Decidir" data-en="Decide">Decidir</h3><p data-pt="Uma matriz no <code>dbt_project.yml</code> diz, por papel, o tratamento de cada tipo. Tipo sem regra é removido: na dúvida, o dado não sai." data-en="A matrix in <code>dbt_project.yml</code> sets, per role, the treatment of each type. A type with no rule is removed: when in doubt, the data stays in.">Uma matriz no <code>dbt_project.yml</code> diz, por papel, o tratamento de cada tipo. Tipo sem regra é removido: na dúvida, o dado não sai.</p></div>
+    <div class="step"><h3 data-pt="Gerar" data-en="Generate">Gerar</h3><p data-pt="A macro <code>aplicar_politica</code> lê o grafo do dbt e escreve a view de cada papel. Coluna sem classificação quebra o build." data-en="The <code>aplicar_politica</code> macro reads the dbt graph and writes each role's view. An unclassified column breaks the build.">A macro <code>aplicar_politica</code> lê o grafo do dbt e escreve a view de cada papel. Coluna sem classificação quebra o build.</p></div>
+    <div class="step"><h3 data-pt="Conferir" data-en="Verify">Conferir</h3><p data-pt="Um teste varre o dado que sai de fato procurando CPF, telefone e e-mail. Não confia na política: confere o resultado." data-en="A test scans the data actually served, looking for CPFs, phones and e-mails. It doesn't trust the policy: it checks the output.">Um teste varre o dado que sai de fato procurando CPF, telefone e e-mail. Não confia na política: confere o resultado.</p></div>
+  </div>
+</section>
+
+<section id="matriz">
+  <h2 data-pt="A política, inteira" data-en="The whole policy">A política, inteira</h2>
+  <p class="sub" data-pt="Esta tabela é lida do próprio banco (<code>governanca.gov_matriz_acesso</code>), gerada da mesma configuração que gera as views. Se a política mudar, esta página muda no próximo build." data-en="This table is read from the database itself (<code>governanca.gov_matriz_acesso</code>), generated from the same config that generates the views. If the policy changes, this page changes on the next build.">Esta tabela é lida do próprio banco (<code>governanca.gov_matriz_acesso</code>), gerada da mesma configuração que gera as views. Se a política mudar, esta página muda no próximo build.</p>
+  <div class="scroll"><table class="matriz">
+    <thead><tr><th data-pt="tipo de dado" data-en="data type">tipo de dado</th><th data-pt="classificação" data-en="classification">classificação</th>{{TH_PAPEIS}}</tr></thead>
+    <tbody>{{LINHAS_MATRIZ}}</tbody>
+  </table></div>
+</section>
+
+<section id="contratos">
+  <h2 data-pt="Contratos de dados: o problema para na porta" data-en="Data contracts: the problem stops at the door">Contratos de dados: o problema para na porta</h2>
+  <p class="sub" data-pt="O time que produz as transações e o time de dados têm um contrato escrito (<code>contratos/transacoes.yml</code>): nomes, tipos, unidade e regras de qualidade. A cada build, o CI simula três incidentes reais e confirma que nenhum chega a uma tabela de consumo." data-en="The team producing transactions and the data team share a written contract (<code>contratos/transacoes.yml</code>): names, types, unit and quality rules. On every build, CI simulates three real incidents and confirms none reaches a consumption table.">O time que produz as transações e o time de dados têm um contrato escrito (<code>contratos/transacoes.yml</code>): nomes, tipos, unidade e regras de qualidade. A cada build, o CI simula três incidentes reais e confirma que nenhum chega a uma tabela de consumo.</p>
+  <div class="incs">{{CARDS_INC}}</div>
+</section>
+
+<section id="ciclo">
+  <h2 data-pt="Finalidade e retenção" data-en="Purpose and retention">Finalidade e retenção</h2>
+  <p class="sub" data-pt="Dado pessoal não é só sobre quem vê, mas também para quê e por quanto tempo." data-en="Personal data is not only about who sees it, but also what for and for how long.">Dado pessoal não é só sobre quem vê, mas também para quê e por quanto tempo.</p>
+  <div class="two">
+    <div class="box"><b class="big">{{N_CRM}} <span class="muted">/ {{N_CLIENTES}}</span></b><h3 data-pt="Marketing só com consentimento" data-en="Marketing only with consent">Marketing só com consentimento</h3><p data-pt="A base de campanhas tem a finalidade como filtro: só entra cliente ativo com consentimento vigente. Um teste confere cada linha contra a origem, e {{RET_MKT}} revogações ficam registradas para auditoria." data-en="The campaign base uses purpose as a filter: only active customers with current consent get in. A test checks every row against the source, and {{RET_MKT}} revocations are logged for audit.">A base de campanhas tem a finalidade como filtro: só entra cliente ativo com consentimento vigente. Um teste confere cada linha contra a origem, e {{RET_MKT}} revogações ficam registradas para auditoria.</p></div>
+    <div class="box"><b class="big">{{RET_ANON}}</b><h3 data-pt="Cadastros na fila de anonimização" data-en="Records queued for anonymization">Cadastros na fila de anonimização</h3><p data-pt="Clientes encerrados há mais tempo que o prazo parametrizado de retenção (referência: 10 anos, Circular BCB 3.978) entram numa fila com a ação esperada. O prazo é uma variável, não um número espalhado pelo código." data-en="Customers closed for longer than the configured retention period (reference: 10 years, BCB Circular 3.978) enter a queue with the expected action. The period is a variable, not a number scattered through the code.">Clientes encerrados há mais tempo que o prazo parametrizado de retenção (referência: 10 anos, Circular BCB 3.978) entram numa fila com a ação esperada. O prazo é uma variável, não um número espalhado pelo código.</p></div>
+    <div class="box"><b class="big">16 → 4</b><h3 data-pt="O número do cartão morre no bronze" data-en="The card number dies in bronze">O número do cartão morre no bronze</h3><p data-pt="Minimização: da camada silver em diante só existem o BIN, os 4 últimos dígitos e um token para conciliação. Não dá para vazar o que não foi guardado." data-en="Minimization: from silver onward only the BIN, the last 4 digits and a reconciliation token exist. You can't leak what isn't stored.">Minimização: da camada silver em diante só existem o BIN, os 4 últimos dígitos e um token para conciliação. Não dá para vazar o que não foi guardado.</p></div>
+    <div class="box"><b class="big">0</b><h3 data-pt="Papéis com acesso a bronze e silver" data-en="Roles with access to bronze and silver">Papéis com acesso a bronze e silver</h3><p data-pt="As camadas de trabalho ficam fechadas. O consumo acontece só pelos schemas <code>acesso_&lt;papel&gt;</code>, que é onde um GRANT entraria num banco de produção." data-en="Working layers stay closed. Consumption only happens through the <code>acesso_&lt;role&gt;</code> schemas, which is where a GRANT would go in a production database.">As camadas de trabalho ficam fechadas. O consumo acontece só pelos schemas <code>acesso_&lt;papel&gt;</code>, que é onde um GRANT entraria num banco de produção.</p></div>
+  </div>
+</section>
+
+<section id="catalogo">
+  <h2 data-pt="Catálogo de dados pessoais" data-en="Personal data catalog">Catálogo de dados pessoais</h2>
+  <p class="sub" data-pt="Inventário gerado do próprio projeto, com tipo, classificação, finalidade, base legal e dono de cada coluna de consumo: o ponto de partida do registro das operações de tratamento (LGPD, art. 37)." data-en="Inventory generated from the project itself, with type, classification, purpose, legal basis and owner for each consumption column: the starting point for the record of processing activities (LGPD, art. 37).">Inventário gerado do próprio projeto, com tipo, classificação, finalidade, base legal e dono de cada coluna de consumo: o ponto de partida do registro das operações de tratamento (LGPD, art. 37).</p>
+  <details><summary data-pt="Ver as {{N_COLS}} colunas" data-en="Show all {{N_COLS}} columns">Ver as {{N_COLS}} colunas</summary>
+  <div class="scroll"><table>
+    <thead><tr><th data-pt="modelo" data-en="model">modelo</th><th data-pt="coluna" data-en="column">coluna</th><th data-pt="tipo" data-en="type">tipo</th><th data-pt="classificação" data-en="classification">classificação</th><th data-pt="pessoal?" data-en="personal?">pessoal?</th><th data-pt="descrição" data-en="description">descrição</th></tr></thead>
+    <tbody>{{LINHAS_CAT}}</tbody>
+  </table></div></details>
+</section>
+
+<footer>
+  <p data-pt="Todos os dados são sintéticos ({{N_CLIENTES}} clientes, {{N_TRANS}} transações), gerados com semente fixa; nenhum CPF, nome ou cartão pertence a alguém. As referências a LGPD e normas do Banco Central ilustram o desenho e não são parecer jurídico. Página gerada automaticamente pelo CI em {{GERADO}}." data-en="All data is synthetic ({{N_CLIENTES}} customers, {{N_TRANS}} transactions), generated with a fixed seed; no CPF, name or card belongs to anyone. References to LGPD and Central Bank rules illustrate the design and are not legal advice. Page generated automatically by CI on {{GERADO}}.">Todos os dados são sintéticos ({{N_CLIENTES}} clientes, {{N_TRANS}} transações), gerados com semente fixa; nenhum CPF, nome ou cartão pertence a alguém. As referências a LGPD e normas do Banco Central ilustram o desenho e não são parecer jurídico. Página gerada automaticamente pelo CI em {{GERADO}}.</p>
+  <p>Gabriela Gatti Rodrigues · <a href="https://gabigattirodrigues.github.io/">portfólio</a> · <a href="https://www.linkedin.com/in/gabriela-gatti-rodrigues">LinkedIn</a></p>
+</footer>
+</div>
+<script>
+(function(){
+  function set(l){
+    document.documentElement.lang = l === 'en' ? 'en' : 'pt-BR';
+    document.querySelectorAll('[data-pt][data-en]').forEach(function(n){ n.innerHTML = n.getAttribute('data-' + l); });
+    document.querySelectorAll('.lang button').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.lang === l); });
+    document.querySelectorAll('img[data-alt-en]').forEach(function(n){ if(!n.dataset.altPt) n.dataset.altPt = n.alt; n.alt = l === 'en' ? n.dataset.altEn : n.dataset.altPt; });
+    try { localStorage.setItem('lang', l); } catch(e) {}
+  }
+  document.querySelectorAll('.lang button').forEach(function(b){ b.addEventListener('click', function(){ set(b.dataset.lang); }); });
+  var l = new URLSearchParams(location.search).get('lang');
+  if (!l) { try { l = localStorage.getItem('lang'); } catch(e) {} }
+  if (!l && (navigator.language || '').toLowerCase().indexOf('pt') !== 0) l = 'en';
+  if (l && l !== 'pt') set(l);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+version: 2
+
+# Views de consumo, uma por papel. São geradas pela macro aplicar_politica a partir da
+# classificação das colunas: o SQL de cada view não é escrito à mão.
+
+models:
+  - name: analista_bi__dim_cliente
+    description: "dim_cliente como o papel 'Analista de BI' enxerga."
+    config: {meta: {papel: analista_bi, modelo_origem: dim_cliente}}
+    data_tests:
+      - argos.nao_expoe_identificadores: {}
+  - name: analista_bi__dim_cartao
+    description: "dim_cartao como o papel 'Analista de BI' enxerga."
+    config: {meta: {papel: analista_bi, modelo_origem: dim_cartao}}
+    data_tests:
+      - argos.nao_expoe_identificadores: {}
+  - name: analista_bi__fct_transacoes
+    description: "fct_transacoes como o papel 'Analista de BI' enxerga."
+    config: {meta: {papel: analista_bi, modelo_origem: fct_transacoes}}
+    data_tests:
+      - argos.nao_expoe_identificadores: {}
+  - name: cientista_dados__dim_cliente
+    description: "dim_cliente como o papel 'Cientista de dados' enxerga."
+    config: {meta: {papel: cientista_dados, modelo_origem: dim_cliente}}
+    data_tests:
+      - argos.nao_expoe_identificadores: {}
+  - name: cientista_dados__dim_cartao
+    description: "dim_cartao como o papel 'Cientista de dados' enxerga."
+    config: {meta: {papel: cientista_dados, modelo_origem: dim_cartao}}
+    data_tests:
+      - argos.nao_expoe_identificadores: {}
+  - name: cientista_dados__fct_transacoes
+    description: "fct_transacoes como o papel 'Cientista de dados' enxerga."
+    config: {meta: {papel: cientista_dados, modelo_origem: fct_transacoes}}
+    data_tests:
+      - argos.nao_expoe_identificadores: {}
+  - name: compliance_pld__dim_cliente
+    description: "dim_cliente como o papel 'Compliance / PLD' enxerga."
+    config: {meta: {papel: compliance_pld, modelo_origem: dim_cliente}}
+  - name: compliance_pld__dim_cartao
+    description: "dim_cartao como o papel 'Compliance / PLD' enxerga."
+    config: {meta: {papel: compliance_pld, modelo_origem: dim_cartao}}
+  - name: compliance_pld__fct_transacoes
+    description: "fct_transacoes como o papel 'Compliance / PLD' enxerga."
+    config: {meta: {papel: compliance_pld, modelo_origem: fct_transacoes}}
+  - name: crm_marketing__mart_crm_contatos
+    description: "Contatos com consentimento, como o papel 'CRM / marketing' enxerga."
+    config: {meta: {papel: crm_marketing, modelo_origem: mart_crm_contatos}}
